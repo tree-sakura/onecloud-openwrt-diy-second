@@ -21,3 +21,8 @@ sed -i "s/hostname='LEDE'/hostname='OneCloud'/" package/base-files/files/bin/con
 
 # 替换终端为bash
 sed -i 's/\/bin\/ash/\/bin\/bash/' package/base-files/files/etc/passwd
+
+# xray-core 的 cronet 链接器只有 x86_64 版, 非 x86_64 宿主跑不动; arm 版 libcronet.a 是普通 ELF 目标文件(无 bitcode), 换回交叉工具链自带链接器即可
+if [ "$(uname -m)" != "x86_64" ] && [ -f feeds/packages/net/xray-core/Makefile ]; then
+  sed -i 's|-B\$(CRONET_CLANG_DIR)/bin -fuse-ld=lld||' feeds/packages/net/xray-core/Makefile
+fi
