@@ -14,11 +14,12 @@
 #sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
 
 # Add a feed source
-echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> "feeds.conf.default"
-echo "src-git passwall https://github.com/xiaorouji/openwrt-passwall.git;main" >> "feeds.conf.default"
-sed -i '2s/^#//' feeds.conf.default
-sed -i '3s/^/#/' feeds.conf.default
-echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
+# 注意: 新版 lede 的 feeds.conf.default 已默认启用 luci(openwrt-25.12 分支) 和 helloworld,
+# 不要再取消注释 luci 或重复追加 helloworld, 否则 ./scripts/feeds update 会报
+# "Duplicate feed name 'luci'" 并以 exit 25 退出
+# passwall 仓库已从 xiaorouji 组织迁移到 Openwrt-Passwall 组织(旧地址已 404)
+echo "src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main" >> "feeds.conf.default"
+echo "src-git passwall https://github.com/Openwrt-Passwall/openwrt-passwall.git;main" >> "feeds.conf.default"
 
 git clone -b lua https://github.com/sbwml/luci-app-alist package/alist
 # git clone https://github.com/rufengsuixing/luci-app-onliner package/onliner

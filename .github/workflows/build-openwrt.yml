@@ -86,9 +86,11 @@ jobs:
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
+        KVER=$(sed -n 's/^KERNEL_PATCHVER:=\(.*\)/\1/p' openwrt/target/linux/amlogic/Makefile)
+        echo "内核基线: config-$KVER"
         [ -e $APP_CONFIG_FILE ] && mv $APP_CONFIG_FILE openwrt/.config
-        [ -e $DEVICE_CONFIG_FILE ] && mv $DEVICE_CONFIG_FILE openwrt/target/linux/amlogic/meson8b/config-6.1
-        [ -e $FRAMEWORK_CONFIG_FILE ] && mv $FRAMEWORK_CONFIG_FILE openwrt/target/linux/amlogic/config-6.1
+        [ -e $DEVICE_CONFIG_FILE ] && mv $DEVICE_CONFIG_FILE openwrt/target/linux/amlogic/meson8b/config-$KVER
+        [ -e $FRAMEWORK_CONFIG_FILE ] && mv $FRAMEWORK_CONFIG_FILE openwrt/target/linux/amlogic/config-$KVER
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
@@ -141,7 +143,6 @@ jobs:
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
-        [ ${UPLOAD_GOFILE} = true && ${{ steps.gofile.outputs.url }} ] && echo "🔗 [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v2.1.0

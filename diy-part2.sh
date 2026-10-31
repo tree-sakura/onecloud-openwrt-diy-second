@@ -13,11 +13,11 @@
 # Modify default IP
 sed -i 's/192.168.1.1/192.168.5.1/g' package/base-files/files/bin/config_generate
 
-# Modify default theme
-sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+# Modify default theme (新版 luci 的默认主题配置移到了 luci-base 的 /etc/config/luci)
+sed -i 's|/luci-static/bootstrap|/luci-static/argon|' feeds/luci/modules/luci-base/root/etc/config/luci
 
-# Modify hostname
-sed -i 's/OpenWrt/OneCloud/g' package/base-files/files/bin/config_generate
+# Modify hostname (新版 lede 默认主机名从 OpenWrt 改成了 LEDE)
+sed -i "s/hostname='LEDE'/hostname='OneCloud'/" package/base-files/files/bin/config_generate
 
 # 替换终端为bash
 sed -i 's/\/bin\/ash/\/bin\/bash/' package/base-files/files/etc/passwd

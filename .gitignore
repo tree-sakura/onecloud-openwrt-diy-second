@@ -1,0 +1,19 @@
+# 本地编译的 lede 源码树(几 GB)
+openwrt/
+# 打包脚本的中间产物
+openwrt.img
+img/
+xd/
+burn/
+boot.img
+rootfs.img
+
+# config_app 的本地副本(编译副产物)
+.config
+
+# 线刷包产物
+*.burn.img
+*.burn.img.xz
+*.simg
+*.sha
+nohup.out
