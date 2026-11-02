@@ -120,12 +120,42 @@ jobs:
       id: compile
       run: |
         cd openwrt
-        echo -e "$(($(nproc)*3/2)) thread compile"
-        make -j$(($(nproc)*3/2)) LINUX_VERMAGIC:=hui || make -j1 LINUX_VERMAGIC:=hui || make -j1 V=s LINUX_VERMAGIC:=hui
+        JOBS=$(($(nproc)*3/2))
+        echo "$JOBS thread compile"
+        make -j$JOBS LINUX_VERMAGIC:=hui 2>&1 | tee build.log
+        if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+          echo "== 并行编译失败, 提取失败目标, 只重编这些部分定位真实报错 =="
+          sed -n 's/^ERROR: \(.*\) failed to build\./\1/p' build.log | sort -u > failed.txt
+          grep -oE '\*\*\* \[[^]]+\] Error [0-9]+' build.log \
+            | sed 's/\*\*\* \[//; s/\] Error [0-9]*//' \
+            | grep -vE '\.mk|world|^\[' | sort -u >> failed.txt
+          sort -u failed.txt -o failed.txt
+          cat failed.txt
+          rc=0
+          while read -r t; do
+            case "$t" in */compile|*/install) ;; *) t="$t/compile";; esac
+            echo ""
+            echo "======== 单编 $t ========"
+            make "$t" -j1 V=s LINUX_VERMAGIC:=hui 2>&1 | tail -120
+            [ "${PIPESTATUS[0]}" -ne 0 ] && rc=1
+          done < failed.txt
+          if [ "$rc" -ne 0 ]; then
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "== 单包重编全部通过, 属偶发失败, 重跑整体编译 =="
+          make -j$JOBS LINUX_VERMAGIC:=hui || { echo "status=failed" >> $GITHUB_OUTPUT; exit 1; }
+        fi
         echo "status=success" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+    - name: 上传编译日志(失败时)
+      if: failure()
+      uses: actions/upload-artifact@main
+      with:
+        name: build-log
+        path: openwrt/build.log
     - name: 生成直刷包
       if: steps.compile.outputs.status == 'success'
       run: |
