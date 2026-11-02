@@ -19,9 +19,10 @@ on:
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
-  # 钉在 2025-11 的 lede 提交上, 该提交 target/linux/amlogic KERNEL_PATCHVER 仍是 6.1,
-  # 与 config_device/config_framework 这两份 6.1 内核片段对得上。改成 master 会让
-  # lede 换内核基线, 片段文件名不再被引用, defconfig 会重新生成整套内核配置。
+  # 取点规则: 本仓库最后一次 2025 提交 096523f(2025-11-04 10:28 UTC)之前最近的 lede master 提交。
+  # 该提交 target/linux/amlogic 的 KERNEL_PATCHVER 仍是 6.1, 与 config_device/config_framework
+  # 这两份 6.1 内核片段对得上; 换成 master 会让 lede 换内核基线, 片段文件名不再被引用,
+  # defconfig 会重新生成整套内核配置。
   REPO_COMMIT: 0894d10e74b7b973881a35b727a2f579b232e4be
   FEEDS_CONF: feeds.conf.default
   APP_CONFIG_FILE: config_app
@@ -86,6 +87,14 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P1_SH
     - name: Update feeds
       run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 钉住 luci feed
+      run: |
+        cd openwrt/feeds/luci
+        # ;master 是 --depth 1 的浅 clone, 里面没有 2025-11 那个提交, 先把历史补全再切
+        git fetch --unshallow origin master || git fetch origin master
+        git checkout --force fd35efe15c041fc6180a97d269703c8189a165a6
+        [ "$(git rev-parse HEAD)" = "fd35efe15c041fc6180a97d269703c8189a165a6" ]
 
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a

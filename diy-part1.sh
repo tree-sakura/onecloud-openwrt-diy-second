@@ -16,7 +16,7 @@
 # src-git 的 <url>^<commit> 形式 scripts/feeds 支持(update_feed_via 的 init_commit 分支)。
 cat > feeds.conf.default <<'EOF'
 src-git packages https://github.com/coolsnowwolf/packages^e7ac58e2f2a93ff93392fec24041cda10739804d
-src-git luci https://github.com/coolsnowwolf/luci.git^fd35efe15c041fc6180a97d269703c8189a165a6
+src-git luci https://github.com/coolsnowwolf/luci.git;master
 src-git routing https://github.com/coolsnowwolf/routing^d6138757432b18203f4a983c2392e948fc8b8941
 src-git telephony https://github.com/coolsnowwolf/telephony.git^a04b7acfd30a6f8f4d78e62955376c4febcb0976
 src-git helloworld https://github.com/fw876/helloworld^5d98b7442e89c5e9e5683c2310bfe9eb516d1e39
@@ -24,5 +24,8 @@ src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-p
 src-git passwall https://github.com/Openwrt-Passwall/openwrt-passwall.git^88f1746d0933ccdca361dfa81a9a8fd8928ecd03
 EOF
 
-git clone https://github.com/sbwml/luci-app-alist package/alist
+# luci 不能写成 ^<commit>: 那个写法走 scripts/feeds 的 init_commit 分支, clone 的是仓库默认分支,
+# 而 coolsnowwolf/luci 的默认分支已经是 openwrt-25.12, 与 2025-11 的 master 提交没有共同祖先,
+# checkout 会直接失败。所以这里只声明 ;master, 真正的钉版放在 update 之后那一步。
+git clone -b lua https://github.com/sbwml/luci-app-alist package/alist
 git -C package/alist checkout 6a6d4fb541b3b9685f3304ff2b2cb3143c88c551
