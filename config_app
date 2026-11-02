@@ -236,7 +236,7 @@ CONFIG_KERNEL_KALLSYMS=y
 # CONFIG_KERNEL_FTRACE is not set
 CONFIG_KERNEL_DEBUG_KERNEL=y
 CONFIG_KERNEL_DEBUG_INFO=y
-CONFIG_KERNEL_DEBUG_INFO_REDUCED=y
+# CONFIG_KERNEL_DEBUG_INFO_REDUCED is not set
 CONFIG_KERNEL_FRAME_WARN=1024
 # CONFIG_KERNEL_DEBUG_LL_UART_NONE is not set
 # CONFIG_KERNEL_DEBUG_LL is not set
@@ -338,7 +338,7 @@ CONFIG_KERNEL_IPV6_PIMSM_V2=y
 CONFIG_KERNEL_IPV6_SEG6_LWTUNNEL=y
 # CONFIG_KERNEL_LWTUNNEL_BPF is not set
 # CONFIG_KERNEL_NET_L3_MASTER_DEV is not set
-# CONFIG_KERNEL_XDP_SOCKETS is not set
+CONFIG_KERNEL_XDP_SOCKETS=y
 # CONFIG_KERNEL_PAGE_POOL is not set
 CONFIG_KERNEL_MPTCP=y
 CONFIG_KERNEL_MPTCP_IPV6=y
@@ -2705,7 +2705,7 @@ CONFIG_PACKAGE_kmod-pppox=y
 # CONFIG_PACKAGE_kmod-sched-act-police is not set
 # CONFIG_PACKAGE_kmod-sched-act-sample is not set
 # CONFIG_PACKAGE_kmod-sched-act-vlan is not set
-# CONFIG_PACKAGE_kmod-sched-bpf is not set
+CONFIG_PACKAGE_kmod-sched-bpf=y
 CONFIG_PACKAGE_kmod-sched-cake=y
 # CONFIG_PACKAGE_kmod-sched-connmark is not set
 CONFIG_PACKAGE_kmod-sched-core=y
@@ -6279,10 +6279,10 @@ CONFIG_PACKAGE_ip-full=y
 # CONFIG_PACKAGE_smcroute is not set
 # CONFIG_PACKAGE_ss is not set
 # CONFIG_PACKAGE_sslh is not set
-# CONFIG_PACKAGE_tc-bpf is not set
+CONFIG_PACKAGE_tc-bpf=y
 # CONFIG_PACKAGE_tc-full is not set
 # CONFIG_PACKAGE_tc-mod-iptables is not set
-CONFIG_PACKAGE_tc-tiny=y
+# CONFIG_PACKAGE_tc-tiny is not set
 # CONFIG_PACKAGE_tcpproxy is not set
 # CONFIG_PACKAGE_ua2f is not set
 # CONFIG_PACKAGE_udp-broadcast-relay-redux is not set
@@ -6666,7 +6666,7 @@ CONFIG_PACKAGE_alist=y
 # CONFIG_PACKAGE_boinc is not set
 # CONFIG_PACKAGE_boinc-wrapper is not set
 # CONFIG_PACKAGE_bpftool-full is not set
-# CONFIG_PACKAGE_bpftool-minimal is not set
+CONFIG_PACKAGE_bpftool-minimal=y
 # CONFIG_PACKAGE_bwm-ng is not set
 # CONFIG_PACKAGE_bwping is not set
 # CONFIG_PACKAGE_chat is not set
@@ -7810,3 +7810,4 @@ CONFIG_PACKAGE_watchcat=y
 # CONFIG_PACKAGE_fontconfig is not set
 # end of Font-Utils
 # end of Xorg
+CONFIG_PACKAGE_kmod-xdp-sockets-diag=y
