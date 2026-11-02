@@ -1,35 +1,60 @@
 #!/bin/bash
-set -e
-
-rm -rf burn
+sudo apt-get install img2simg
 ./AmlImg unpack ./uboot.img burn/
-gzip -dkf openwrt/bin/targets/*/*/*.gz
+gzip -dk openwrt/bin/targets/*/*/*.gz
 
 diskimg_path="openwrt/bin/targets/*/*/*.img"
+boot_img_name="openwrt.img"
+boot_img_mnt="xd"
+rootfs_img_mnt="img"
 prefix=$(ls $diskimg_path | sed 's/\.img$//')
 burnimg_name="${prefix}.burn.img"
+
 diskimg=$(ls -1 $diskimg_path | head -n 1)
+loop=$(sudo losetup --find --show --partscan "$diskimg" | sed 's/[^[:print:]]//g')
 
-# 取分区起始扇区和扇区数(不需要 loop 设备)
-part() {
-  sfdisk -d "$diskimg" | sed -n "s/^.*[^0-9]$1 *: *start= *\([0-9]*\), *size= *\([0-9]*\),.*/\1 \2/p"
-}
-read b_start b_size < <(part 1)
-read r_start r_size < <(part 2)
-[ -n "$b_start" ] && [ -n "$r_start" ] || { echo "Error: 读取分区表失败"; exit 1; }
+if [ -z "$loop" ]; then
+  echo "Error: Failed to setup loop device."
+  exit 1
+fi
 
-# 切出 boot 和 rootfs 两个分区
-dd if="$diskimg" of=boot.img   bs=512 skip=$b_start count=$b_size status=none
-dd if="$diskimg" of=rootfs.img bs=512 skip=$r_start count=$r_size status=none
+dd if=/dev/zero of="${boot_img_name}" bs=1M count=600 status=progress
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to create boot image."
+  exit 1
+fi
 
-# rootfs 扩到 600MiB(代替原来的 mkfs + mount + cp)
-truncate -s 600M rootfs.img
-e2fsck -fy rootfs.img || [ $? -le 1 ]
-resize2fs rootfs.img
+mkfs.ext4 "${boot_img_name}"
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to format boot image."
+  exit 1
+fi
 
-img2simg boot.img   burn/boot.simg
-img2simg rootfs.img burn/rootfs.simg
-rm -f boot.img rootfs.img
+mkdir -p "${boot_img_mnt}" "${rootfs_img_mnt}"
+sudo mount "${boot_img_name}" "${boot_img_mnt}"
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to mount boot image."
+  exit 1
+fi
+
+sudo mount "${loop}p2" "${rootfs_img_mnt}"
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to mount rootfs partition."
+  exit 1
+fi
+
+sudo cp -rp ${rootfs_img_mnt}/* "${boot_img_mnt}"
+sudo sync
+
+sudo umount "${boot_img_mnt}" || true
+sudo umount "${rootfs_img_mnt}" || true
+rm -rf "${boot_img_mnt}" "${rootfs_img_mnt}"
+
+sudo img2simg "${loop}p1" burn/boot.simg
+sudo img2simg "${boot_img_name}" burn/rootfs.simg
+sudo rm -f "${boot_img_name}"
+
+sudo losetup -d "$loop" || true
 
 printf "PARTITION:boot:sparse:boot.simg\nPARTITION:rootfs:sparse:rootfs.simg\n" >> burn/commands.txt
 

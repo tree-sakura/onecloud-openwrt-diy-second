@@ -19,6 +19,10 @@ on:
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
+  # 钉在 2025-11 的 lede 提交上, 该提交 target/linux/amlogic KERNEL_PATCHVER 仍是 6.1,
+  # 与 config_device/config_framework 这两份 6.1 内核片段对得上。改成 master 会让
+  # lede 换内核基线, 片段文件名不再被引用, defconfig 会重新生成整套内核配置。
+  REPO_COMMIT: 0894d10e74b7b973881a35b727a2f579b232e4be
   FEEDS_CONF: feeds.conf.default
   APP_CONFIG_FILE: config_app
   FRAMEWORK_CONFIG_FILE: config_framework
@@ -70,6 +74,9 @@ jobs:
       run: |
         df -hT $PWD
         git clone $REPO_URL -b $REPO_BRANCH openwrt
+        cd openwrt
+        [ -n "$REPO_COMMIT" ] && git checkout "$REPO_COMMIT"
+        grep -q 'KERNEL_PATCHVER:=6.1' target/linux/amlogic/Makefile || { echo "amlogic 内核基线不是 6.1, 两份内核片段(config-6.1)不会被引用"; exit 1; }
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     - name: Load custom feeds
       run: |
@@ -86,11 +93,9 @@ jobs:
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
-        KVER=$(sed -n 's/^KERNEL_PATCHVER:=\(.*\)/\1/p' openwrt/target/linux/amlogic/Makefile)
-        echo "内核基线: config-$KVER"
         [ -e $APP_CONFIG_FILE ] && mv $APP_CONFIG_FILE openwrt/.config
-        [ -e $DEVICE_CONFIG_FILE ] && mv $DEVICE_CONFIG_FILE openwrt/target/linux/amlogic/meson8b/config-$KVER
-        [ -e $FRAMEWORK_CONFIG_FILE ] && mv $FRAMEWORK_CONFIG_FILE openwrt/target/linux/amlogic/config-$KVER
+        [ -e $DEVICE_CONFIG_FILE ] && mv $DEVICE_CONFIG_FILE openwrt/target/linux/amlogic/meson8b/config-6.1
+        [ -e $FRAMEWORK_CONFIG_FILE ] && mv $FRAMEWORK_CONFIG_FILE openwrt/target/linux/amlogic/config-6.1
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
@@ -143,6 +148,7 @@ jobs:
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
+        [ ${UPLOAD_GOFILE} = true && ${{ steps.gofile.outputs.url }} ] && echo "🔗 [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v2.1.0
